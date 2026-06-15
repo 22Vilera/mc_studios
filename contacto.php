@@ -45,31 +45,21 @@ if (!empty($errors)) {
     exit;
 }
 
-// ── Conexión a la base de datos ─────────────────────────────
+// ── Conexión a la base de datos (opcional) ──────────────────
 mysqli_report(MYSQLI_REPORT_OFF);
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-if ($conn->connect_error) {
-    error_log('[Mc Studios] DB error: ' . $conn->connect_error);
-    header('Location: ' . BASE_URL . '?status=db_error#contacto');
-    exit;
-}
-$conn->set_charset('utf8mb4');
-
-$sql  = "INSERT INTO leads_contacto (nombre, institucion, correo, telefono, mensaje) VALUES (?, ?, ?, ?, ?)";
-$stmt = $conn->prepare($sql);
-if (!$stmt) {
-    error_log('[Mc Studios] Prepare error: ' . $conn->error);
-    header('Location: ' . BASE_URL . '?status=error#contacto');
-    exit;
-}
-$stmt->bind_param('sssss', $nombre, $institucion, $correo, $telefono, $mensaje);
-$dbOk = $stmt->execute();
-$stmt->close();
-$conn->close();
-
-if (!$dbOk) {
-    header('Location: ' . BASE_URL . '?status=error#contacto');
-    exit;
+$conn = @new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+if (!$conn->connect_error) {
+    $conn->set_charset('utf8mb4');
+    $sql  = "INSERT INTO leads_contacto (nombre, institucion, correo, telefono, mensaje) VALUES (?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    if ($stmt) {
+        $stmt->bind_param('sssss', $nombre, $institucion, $correo, $telefono, $mensaje);
+        $stmt->execute();
+        $stmt->close();
+    }
+    $conn->close();
+} else {
+    error_log('[Mc Studios] DB no disponible: ' . $conn->connect_error);
 }
 
 // ── Envío de correo con PHPMailer ───────────────────────────
