@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: mc-studios-web
+    runtime: docker
+    plan: free
+    envVars:
+      - key: DB_HOST
+        value: ""         # Host MySQL externo (ej: db4free.net)
+      - key: DB_USER
+        value: ""         # Usuario de la base de datos
+      - key: DB_PASS
+        sync: false       # Ingresar manualmente en el dashboard de Render
+      - key: DB_NAME
+        value: mc_studios_db
+      - key: SMTP_PASS
+        sync: false       # Contraseña de aplicación Gmail (ingresar en Render)

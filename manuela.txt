@@ -1,0 +1,12 @@
+Abre 2 terminales y ejecuta una en cada una:
+
+Terminal 1 — MySQL:
+
+
+C:\xampp\mysql\bin\mysqld.exe --defaults-file="C:\xampp\mysql\bin\my.ini" --standalone
+
+Terminal 2 — Servidor web:
+
+
+C:\xampp\php\php.exe -S localhost:8080 -t "C:\Users\carlo\Desktop\Mc Score"
+Luego abre el navegador en http://localhost:8080
