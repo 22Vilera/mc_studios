@@ -83,6 +83,7 @@ try {
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = 587;
     $mail->CharSet    = 'UTF-8';
+    $mail->Timeout    = 10;
 
     // Remitente y destinatario
     $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
