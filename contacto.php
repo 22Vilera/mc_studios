@@ -62,84 +62,61 @@ if (!$conn->connect_error) {
     error_log('[Mc Studios] DB no disponible: ' . $conn->connect_error);
 }
 
-// ── Envío de correo con PHPMailer ───────────────────────────
-require_once __DIR__ . '/libs/PHPMailer/Exception.php';
-require_once __DIR__ . '/libs/PHPMailer/PHPMailer.php';
-require_once __DIR__ . '/libs/PHPMailer/SMTP.php';
+// ── Envío de correo con Resend API ──────────────────────────
+$resendKey = getenv('RESEND_API_KEY') ?: '';
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
+$htmlBody = "
+<div style='font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8faff;border-radius:12px;overflow:hidden;border:1px solid #e0e7ff'>
+  <div style='background:#0D1F4C;padding:28px 32px;text-align:center'>
+    <h1 style='color:#FF6B00;margin:0;font-size:1.5rem'>Mc Studios, C.A.</h1>
+    <p style='color:rgba(255,255,255,0.7);margin:6px 0 0;font-size:0.9rem'>Nuevo lead de marketing — Smith Core</p>
+  </div>
+  <div style='padding:32px'>
+    <table style='width:100%;border-collapse:collapse;font-size:0.9375rem'>
+      <tr><td style='padding:10px 0;color:#6B7A99;font-weight:600;width:40%'>Nombre</td><td style='padding:10px 0;color:#0D1B3E;font-weight:700'>{$nombre}</td></tr>
+      <tr style='border-top:1px solid #EEF2FF'><td style='padding:10px 0;color:#6B7A99;font-weight:600'>Institución</td><td style='padding:10px 0;color:#0D1B3E'>{$institucion}</td></tr>
+      <tr style='border-top:1px solid #EEF2FF'><td style='padding:10px 0;color:#6B7A99;font-weight:600'>Correo</td><td style='padding:10px 0'><a href='mailto:{$correo}' style='color:#FF6B00'>{$correo}</a></td></tr>
+      <tr style='border-top:1px solid #EEF2FF'><td style='padding:10px 0;color:#6B7A99;font-weight:600'>Teléfono</td><td style='padding:10px 0;color:#0D1B3E'>" . ($telefono ?: '—') . "</td></tr>
+      <tr style='border-top:1px solid #EEF2FF'><td style='padding:10px 0;color:#6B7A99;font-weight:600;vertical-align:top'>Mensaje</td><td style='padding:10px 0;color:#0D1B3E'>" . (nl2br($mensaje) ?: '—') . "</td></tr>
+    </table>
+    <div style='margin-top:24px;padding:16px;background:#FFF3E8;border-radius:8px;border-left:4px solid #FF6B00'>
+      <p style='margin:0;font-size:0.875rem;color:#0D1B3E'><strong>Acción recomendada:</strong> Contactar a este prospecto en menos de 24 horas.</p>
+    </div>
+  </div>
+  <div style='background:#EEF2FF;padding:16px 32px;text-align:center'>
+    <p style='margin:0;font-size:0.8125rem;color:#6B7A99'>© 2026 Mc Studios, C.A. — San Juan de los Morros, Venezuela</p>
+  </div>
+</div>";
 
-$mail = new PHPMailer(true);
+if ($resendKey) {
+    $payload = json_encode([
+        'from'    => 'Mc Studios <onboarding@resend.dev>',
+        'to'      => [MAIL_TO],
+        'reply_to'=> $correo,
+        'subject' => "Nuevo Lead — {$nombre} | {$institucion}",
+        'html'    => $htmlBody,
+    ]);
 
-try {
-    // Configuración SMTP Gmail
-    $mail->isSMTP();
-    $mail->Host       = 'smtp.gmail.com';
-    $mail->SMTPAuth   = true;
-    $mail->Username   = SMTP_USER;
-    $mail->Password   = SMTP_PASS;
-    $mail->SMTPSecure = 'ssl';
-    $mail->Port       = 465;
-    $mail->CharSet    = 'UTF-8';
-    $mail->Timeout    = 5;
+    $ch = curl_init('https://api.resend.com/emails');
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $payload,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 10,
+        CURLOPT_HTTPHEADER     => [
+            'Authorization: Bearer ' . $resendKey,
+            'Content-Type: application/json',
+        ],
+    ]);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
 
-    // Remitente y destinatario
-    $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
-    $mail->addAddress(MAIL_TO, 'Mc Studios — Leads');
-    $mail->addReplyTo($correo, $nombre);
-
-    // Contenido del correo
-    $mail->isHTML(true);
-    $mail->Subject = "🚀 Nuevo Lead — {$nombre} | {$institucion}";
-    $mail->Body    = "
-    <div style='font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8faff;border-radius:12px;overflow:hidden;border:1px solid #e0e7ff'>
-      <div style='background:#0D1F4C;padding:28px 32px;text-align:center'>
-        <h1 style='color:#FF6B00;margin:0;font-size:1.5rem'>Mc Studios, C.A.</h1>
-        <p style='color:rgba(255,255,255,0.7);margin:6px 0 0;font-size:0.9rem'>Nuevo lead de marketing — Smith Core</p>
-      </div>
-      <div style='padding:32px'>
-        <table style='width:100%;border-collapse:collapse;font-size:0.9375rem'>
-          <tr>
-            <td style='padding:10px 0;color:#6B7A99;font-weight:600;width:40%'>Nombre</td>
-            <td style='padding:10px 0;color:#0D1B3E;font-weight:700'>{$nombre}</td>
-          </tr>
-          <tr style='border-top:1px solid #EEF2FF'>
-            <td style='padding:10px 0;color:#6B7A99;font-weight:600'>Institución</td>
-            <td style='padding:10px 0;color:#0D1B3E'>{$institucion}</td>
-          </tr>
-          <tr style='border-top:1px solid #EEF2FF'>
-            <td style='padding:10px 0;color:#6B7A99;font-weight:600'>Correo</td>
-            <td style='padding:10px 0'><a href='mailto:{$correo}' style='color:#FF6B00'>{$correo}</a></td>
-          </tr>
-          <tr style='border-top:1px solid #EEF2FF'>
-            <td style='padding:10px 0;color:#6B7A99;font-weight:600'>Teléfono</td>
-            <td style='padding:10px 0;color:#0D1B3E'>" . ($telefono ?: '—') . "</td>
-          </tr>
-          <tr style='border-top:1px solid #EEF2FF'>
-            <td style='padding:10px 0;color:#6B7A99;font-weight:600;vertical-align:top'>Mensaje</td>
-            <td style='padding:10px 0;color:#0D1B3E'>" . (nl2br($mensaje) ?: '—') . "</td>
-          </tr>
-        </table>
-        <div style='margin-top:24px;padding:16px;background:#FFF3E8;border-radius:8px;border-left:4px solid #FF6B00'>
-          <p style='margin:0;font-size:0.875rem;color:#0D1B3E'>
-            <strong>Acción recomendada:</strong> Contactar a este prospecto en menos de 24 horas para maximizar la conversión.
-          </p>
-        </div>
-      </div>
-      <div style='background:#EEF2FF;padding:16px 32px;text-align:center'>
-        <p style='margin:0;font-size:0.8125rem;color:#6B7A99'>© 2026 Mc Studios, C.A. — San Juan de los Morros, Venezuela</p>
-      </div>
-    </div>";
-
-    $mail->AltBody = "Nuevo lead: {$nombre} | {$institucion} | {$correo} | {$telefono}\n\nMensaje: {$mensaje}";
-
-    $mail->send();
-
-} catch (Exception $e) {
-    // El lead ya se guardó en BD; el fallo de correo no cancela el éxito
-    error_log('[Mc Studios] Error al enviar correo: ' . $mail->ErrorInfo);
+    if ($httpCode !== 200 && $httpCode !== 201) {
+        error_log('[Mc Studios] Resend error ' . $httpCode . ': ' . $response);
+    }
+} else {
+    error_log('[Mc Studios] RESEND_API_KEY no configurada.');
 }
 
 header('Location: ' . BASE_URL . '?status=success#contacto');
