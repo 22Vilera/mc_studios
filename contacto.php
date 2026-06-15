@@ -83,7 +83,7 @@ try {
     $mail->SMTPSecure = 'ssl';
     $mail->Port       = 465;
     $mail->CharSet    = 'UTF-8';
-    $mail->Timeout    = 10;
+    $mail->Timeout    = 5;
 
     // Remitente y destinatario
     $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
