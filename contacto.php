@@ -80,8 +80,8 @@ try {
     $mail->SMTPAuth   = true;
     $mail->Username   = SMTP_USER;
     $mail->Password   = SMTP_PASS;
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port       = 587;
+    $mail->SMTPSecure = 'ssl';
+    $mail->Port       = 465;
     $mail->CharSet    = 'UTF-8';
     $mail->Timeout    = 10;
 
