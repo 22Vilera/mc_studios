@@ -1,11 +1,12 @@
 <?php
 declare(strict_types=1);
+ob_start();
 
 // ── Configuración de base de datos ──────────────────────────
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') ?: '');
-define('DB_NAME', getenv('DB_NAME') ?: 'mc_studios_db');
+define('DB_HOST', getenv('DB_HOST') ?: getenv('MYSQLHOST')     ?: 'localhost');
+define('DB_USER', getenv('DB_USER') ?: getenv('MYSQLUSER')     ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: getenv('MYSQLPASSWORD') ?: '');
+define('DB_NAME', getenv('DB_NAME') ?: getenv('MYSQLDATABASE') ?: 'mc_studios_db');
 define('BASE_URL', 'index.php');
 
 // ── Configuración de correo (Gmail SMTP) ────────────────────
